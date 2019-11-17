@@ -1,7 +1,46 @@
-config LIBREDIS
+menuconfig LIBREDIS
 	bool "Redis"
 	default n
-	select LIBNOLIBC if !HAVE_LIBC
+
+if LIBREDIS
+# hidden
+config LIBREDIS_COMMON
+	bool
+	default n
 	select LIBUKDEBUG
 	select LIBUKALLOC
 	select LIBUKSCHED
+	select LIBNEWLIBC
+	select LIBNEWLIBC_WANT_IO_C99_FORMATS if LIBNEWLIBC
+	select LIBNEWLIBC_LINUX_ERRNO_EXTENSIONS if LIBNEWLIBC
+	select LIBPTHREAD_EMBEDDED
+	select UKSYSINFO
+	select LIBPOSIX_LIBDL
+	select LIBLWIP
+	select LWIP_IPV6
+
+config LIBREDIS_SERVER
+	bool "Redis server"
+	default y
+	select LIBREDIS_COMMON
+	select LIBREDIS_HIREDIS
+	imply LIBREDIS_LUA
+	help
+		Build the Redis server library.
+
+config LIBREDIS_CLIENT
+	bool "Redis client"
+	default n
+	select LIBREDIS_COMMON
+	select LIBREDIS_HIREDIS
+	help
+		Build the Redis client library.
+
+config LIBREDIS_LUA
+	bool "Use internal Lua implementation"
+	default n
+
+config LIBREDIS_HIREDIS
+	bool "Use internal Hiredis implementation"
+	default n
+endif
