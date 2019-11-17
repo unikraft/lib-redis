@@ -1,0 +1,7 @@
+config LIBREDIS
+	bool "Redis"
+	default n
+	select LIBNOLIBC if !HAVE_LIBC
+	select LIBUKDEBUG
+	select LIBUKALLOC
+	select LIBUKSCHED
