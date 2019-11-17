@@ -18,6 +18,10 @@ config LIBREDIS_COMMON
 	select LIBPOSIX_LIBDL
 	select LIBLWIP
 	select LWIP_IPV6
+# hidden
+config LIBREDIS_MAIN_FUNCTION
+	bool
+	default n
 
 config LIBREDIS_SERVER
 	bool "Redis server"
@@ -28,6 +32,13 @@ config LIBREDIS_SERVER
 	help
 		Build the Redis server library.
 
+	if LIBREDIS_SERVER
+		config LIBREDIS_SERVER_MAIN_FUNCTION
+			bool "Provide main function"
+			default n
+			select LIBREDIS_MAIN_FUNCTION
+	endif
+
 config LIBREDIS_CLIENT
 	bool "Redis client"
 	default n
@@ -35,6 +46,13 @@ config LIBREDIS_CLIENT
 	select LIBREDIS_HIREDIS
 	help
 		Build the Redis client library.
+
+	if LIBREDIS_CLIENT
+		config LIBREDIS_CLIENT_MAIN_FUNCTION
+			bool "Provide main function"
+			default n
+			select LIBREDIS_MAIN_FUNCTION
+	endif
 
 config LIBREDIS_LUA
 	bool "Use internal Lua implementation"

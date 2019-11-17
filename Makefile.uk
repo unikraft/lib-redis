@@ -154,6 +154,8 @@ LIBREDIS_COMMON_SRCS-y += $(LIBREDIS_SRC)/release.c
 LIBREDIS_COMMON_SRCS-y += $(LIBREDIS_SRC)/siphash.c
 LIBREDIS_COMMON_SRCS-y += $(LIBREDIS_SRC)/zmalloc.c
 
+LIBREDIS_COMMON_SRCS-$(CONFIG_LIBREDIS_MAIN_FUNCTION) += $(LIBREDIS_BASE)/main.c|unikraft
+
 ################################################################################
 # Redis server
 ################################################################################
