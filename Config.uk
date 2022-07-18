@@ -11,6 +11,7 @@ config LIBREDIS_COMMON
 	select LIBUKALLOC
 	select LIBUKSCHED
 	select LIBNEWLIBC
+	select LIBUKMMAP
 	select LIBNEWLIBC_WANT_IO_C99_FORMATS if LIBNEWLIBC
 	select LIBNEWLIBC_LINUX_ERRNO_EXTENSIONS if LIBNEWLIBC
 	select LIBPTHREAD_EMBEDDED
@@ -27,6 +28,7 @@ config LIBREDIS_SERVER
 	bool "Redis server"
 	default y
 	select LIBREDIS_COMMON
+	select LIBREDIS_HISTOGRAM
 	select LIBREDIS_HIREDIS
 	imply LIBREDIS_LUA
 	help
@@ -43,6 +45,7 @@ config LIBREDIS_CLIENT
 	bool "Redis client"
 	default n
 	select LIBREDIS_COMMON
+	select LIBREDIS_HISTOGRAM
 	select LIBREDIS_HIREDIS
 	help
 		Build the Redis client library.
@@ -60,5 +63,9 @@ config LIBREDIS_LUA
 
 config LIBREDIS_HIREDIS
 	bool "Use internal Hiredis implementation"
+	default n
+
+config LIBREDIS_HISTOGRAM
+	bool "Use internal Histogram implementation"
 	default n
 endif
