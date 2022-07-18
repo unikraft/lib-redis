@@ -40,6 +40,7 @@
 $(eval $(call addlib_s,libredis,$(CONFIG_LIBREDIS)))
 $(eval $(call addlib_s,libredis_lua,$(CONFIG_LIBREDIS_LUA)))
 $(eval $(call addlib_s,libredis_hiredis,$(CONFIG_LIBREDIS_HIREDIS)))
+$(eval $(call addlib_s,libredis_histogram,$(CONFIG_LIBREDIS_HISTOGRAM)))
 $(eval $(call addlib_s,libredis_common,$(CONFIG_LIBREDIS_COMMON)))
 $(eval $(call addlib_s,libredis_server,$(CONFIG_LIBREDIS_SERVER)))
 $(eval $(call addlib_s,libredis_client,$(CONFIG_LIBREDIS_CLIENT)))
@@ -67,6 +68,7 @@ CINCLUDES-y   += -I$(LIBREDIS_BASE)/include
 CXXINCLUDES-y += -I$(LIBREDIS_BASE)/include
 
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HIREDIS) += -I$(LIBREDIS_DEPS)/hiredis
+LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HISTOGRAM) += -I$(LIBREDIS_DEPS)/hdr_histogram
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
 
 ################################################################################
@@ -131,8 +133,13 @@ LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/async.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/hiredis.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/net.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/read.c
-#LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/sds.c
-LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_SRC)/sds.c
+
+################################################################################
+# Redis internal hdr histogram
+################################################################################
+LIBREDIS_HISTOGRAM_CFLAGS-y += $(LIBREDIS_CFLAGS-y)
+
+LIBREDIS_HISTOGRAM_SRCS-y += $(LIBREDIS_DEPS)/hdr_histogram/hdr_histogram.c
 
 ################################################################################
 # Functionality shared between server and client
