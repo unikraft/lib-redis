@@ -19,7 +19,6 @@ config LIBREDIS_COMMON
 	select LIBPOSIX_SOCKET
 	select LIBPOSIX_EVENT
 	select LIBLWIP
-	select LWIP_IPV6
 # hidden
 config LIBREDIS_MAIN_FUNCTION
 	bool
