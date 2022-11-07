@@ -1,0 +1,30 @@
+From 676fdf04940ec18e034723cb2b3bf325548aab39 Mon Sep 17 00:00:00 2001
+From: Cezar Craciunoiu <cezar.craciunoiu@gmail.com>
+Date: Mon, 18 Jul 2022 16:08:51 +0300
+Subject: [PATCH 2/8] src: Ensure no redefinition of un/likely
+
+Signed-off-by: Cezar Craciunoiu <cezar.craciunoiu@gmail.com>
+---
+ src/config.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/config.h b/src/config.h
+index 6baa8bd0f..2f34cf0a3 100644
+--- a/src/config.h
++++ b/src/config.h
+@@ -138,8 +138,12 @@
+ #endif
+ 
+ #if __GNUC__ >= 3
++#ifndef likely
+ #define likely(x) __builtin_expect(!!(x), 1)
++#endif
++#ifndef unlikely
+ #define unlikely(x) __builtin_expect(!!(x), 0)
++#endif
+ #else
+ #define likely(x) (x)
+ #define unlikely(x) (x)
+-- 
+2.34.1
+
