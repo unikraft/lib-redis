@@ -5,6 +5,7 @@
 #  Authors: Bogdan Lascu <lascu.bogdan96@gmail.com>
 #           Costin Lupu <costin.lupu@cs.pub.ro>
 #           Cezar Craciunoiu <cezar.craciunoiu@gmail.com>
+#           Ioan-Teodor Teugea <teodor.teugea@gmail.com>
 #
 #  Copyright (c) 2019, University Politehnica of Bucharest. All rights reserved.
 #
@@ -48,7 +49,7 @@ $(eval $(call addlib_s,libredis_client,$(CONFIG_LIBREDIS_CLIENT)))
 ################################################################################
 # Sources
 ################################################################################
-LIBREDIS_VERSION=7.0.5
+LIBREDIS_VERSION=7.0.11
 LIBREDIS_URL=https://github.com/redis/redis/archive/$(LIBREDIS_VERSION).zip
 LIBREDIS_BASENAME=redis-$(LIBREDIS_VERSION)
 LIBREDIS_PATCHDIR=$(LIBREDIS_BASE)/patches
@@ -77,7 +78,7 @@ LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
 # Suppress some warnings to make the build process look neater
 LIBREDIS_FLAGS_SUPPRESS = -Wno-unused-parameter -Wno-unused-variable \
 	-Wno-unused-value -Wno-implicit-fallthrough -Wno-char-subscripts \
-	-Wno-misleading-indentation
+	-Wno-misleading-indentation -D__STDC_NO_ATOMICS__
 LIBREDIS_CFLAGS-y += $(LIBREDIS_FLAGS_SUPPRESS)
 
 ################################################################################

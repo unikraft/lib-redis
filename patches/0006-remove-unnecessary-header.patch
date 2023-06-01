@@ -1,0 +1,25 @@
+From d1d6842e4f8b1bef364b086c3ce62f0c744b47c3 Mon Sep 17 00:00:00 2001
+From: Ioan-Teodor Teugea <ioan_teodor.teugea@stud.acs.upb.ro>
+Date: Sun, 30 Jul 2023 11:58:53 +0300
+Subject: [PATCH] remove unnecessary header
+
+Signed-off-by: Ioan-Teodor Teugea <ioan_teodor.teugea@stud.acs.upb.ro>
+---
+ src/replication.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/replication.c b/src/replication.c
+index e86aa4b59..5c8bc8395 100644
+--- a/src/replication.c
++++ b/src/replication.c
+@@ -34,7 +34,6 @@
+ #include "bio.h"
+ #include "functions.h"
+ 
+-#include <memory.h>
+ #include <sys/time.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+-- 
+2.34.1
+
