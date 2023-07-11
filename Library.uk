@@ -1,0 +1,6 @@
+name        := "redis"
+description := "An open source, in-memory data structure store, used as a database, cache, and message broker."
+gitrepo     := "https://github.com/redis/redis.git"
+homepage    := "https://redis.io"
+license     := "BSD-3-Clause"
+version     := 5.0.6 sha256:36c38ab5052facbbaac25bc823637d50b6b71926d1df123472903a818304e9ef https://github.com/redis/redis/archive/5.0.6.tar.gz
