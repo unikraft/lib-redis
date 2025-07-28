@@ -1,0 +1,129 @@
+From 5e6584f1b9f0a70b5af38b79ed5ba391bb5d2ed6 Mon Sep 17 00:00:00 2001
+From: Salar Samani <soltanisamani@gmail.com>
+Date: Mon, 28 Jul 2025 23:44:32 +0200
+Subject: [PATCH] Fix pthread_t confilict
+
+---
+ src/bio.c        | 25 +++++++++++++++++++++++++
+ src/debug.c      | 15 +++++++++++++++
+ src/networking.c | 23 +++++++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+
+diff --git a/src/bio.c b/src/bio.c
+index 9242e51ed..d93d5604e 100644
+--- a/src/bio.c
++++ b/src/bio.c
+@@ -299,6 +299,30 @@ unsigned long long bioWaitStepOfType(int type) {
+  * used only when it's critical to stop the threads for some reason.
+  * Currently Redis does this only on crash (for instance on SIGSEGV) in order
+  * to perform a fast memory check without other threads messing with memory. */
++
++#ifdef WORKAROUND_PTHREAD_EMBEDDED
++void bioKillThreads(void) {
++    int err, j;
++    for (j = 0; j < BIO_NUM_OPS; j++) {
++        /* Skip current thread */
++        if (pthread_equal(bio_threads[j], pthread_self()))
++            continue;
++        /* Check non-zero slot */
++        if (memcmp(&bio_threads[j], &(pthread_t){0}, sizeof(pthread_t)) != 0 &&
++            pthread_cancel(bio_threads[j]) == 0) {
++            err = pthread_join(bio_threads[j], NULL);
++            if (err != 0) {
++                serverLog(LL_WARNING,
++                    "Bio thread for job type #%d cannot be joined: %s",
++                    j, strerror(err));
++            } else {
++                serverLog(LL_WARNING,
++                    "Bio thread for job type #%d terminated", j);
++            }
++        }
++    }
++}
++#else
+ void bioKillThreads(void) {
+     int err, j;
+ 
+@@ -316,3 +340,4 @@ void bioKillThreads(void) {
+         }
+     }
+ }
++#endif /*WORKAROUND_PTHREAD_EMBEDDED*/
+\ No newline at end of file
+diff --git a/src/debug.c b/src/debug.c
+index 38ee6fb77..214350b79 100644
+--- a/src/debug.c
++++ b/src/debug.c
+@@ -1907,6 +1907,20 @@ int memtest_test_linux_anonymous_maps(void) {
+ }
+ #endif /* HAVE_PROC_MAPS */
+ 
++#ifdef WORKAROUND_PTHREAD_EMBEDDED
++static void killMainThread(void) {
++    int err;
++    if (!pthread_equal(pthread_self(), server.main_thread_id) &&
++        pthread_cancel(server.main_thread_id) == 0) {
++        if ((err = pthread_join(server.main_thread_id, NULL)) != 0) {
++            serverLog(LL_WARNING,
++                "main thread cannot be joined: %s", strerror(err));
++        } else {
++            serverLog(LL_WARNING, "main thread terminated");
++        }
++    }
++}
++#else
+ static void killMainThread(void) {
+     int err;
+     if (pthread_self() != server.main_thread_id && pthread_cancel(server.main_thread_id) == 0) {
+@@ -1917,6 +1931,7 @@ static void killMainThread(void) {
+         }
+     }
+ }
++#endif /*WORKAROUND_PTHREAD_EMBEDDED*/
+ 
+ /* Kill the running threads (other than current) in an unclean way. This function
+  * should be used only when it's critical to stop the threads for some reason.
+diff --git a/src/networking.c b/src/networking.c
+index 90cc64d70..23d6d0656 100644
+--- a/src/networking.c
++++ b/src/networking.c
+@@ -4149,6 +4149,28 @@ void initThreadedIO(void) {
+     }
+ }
+ 
++#ifdef WORKAROUND_PTHREAD_EMBEDDED
++void killIOThreads(void) {
++    int err, j;
++    for (j = 0; j < server.io_threads_num; j++) {
++        /* Skip current thread */
++        if (pthread_equal(io_threads[j], pthread_self()))
++            continue;
++        /* Check non-zero slot */
++        if (memcmp(&io_threads[j], &(pthread_t){0}, sizeof(pthread_t)) != 0 &&
++            pthread_cancel(io_threads[j]) == 0) {
++            if ((err = pthread_join(io_threads[j], NULL)) != 0) {
++                serverLog(LL_WARNING,
++                    "IO thread #%d cannot be joined: %s",
++                    j, strerror(err));
++            } else {
++                serverLog(LL_WARNING,
++                    "IO thread #%d terminated", j);
++            }
++        }
++    }
++}
++#else
+ void killIOThreads(void) {
+     int err, j;
+     for (j = 0; j < server.io_threads_num; j++) {
+@@ -4165,6 +4187,7 @@ void killIOThreads(void) {
+         }
+     }
+ }
++#endif /*WORKAROUND_PTHREAD_EMBEDDED*/
+ 
+ void startThreadedIO(void) {
+     serverAssert(server.io_threads_active == 0);
+-- 
+2.43.0
+
