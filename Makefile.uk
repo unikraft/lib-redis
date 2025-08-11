@@ -77,6 +77,7 @@ LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
 LIBREDIS_FLAGS_SUPPRESS = -Wno-unused-parameter -Wno-unused-variable \
 	-Wno-unused-value -Wno-implicit-fallthrough -Wno-char-subscripts \
 	-Wno-misleading-indentation -D__STDC_NO_ATOMICS__
+LIBREDIS_CFLAGS-y += -DWORKAROUND_PTHREAD_EMBEDDED
 LIBREDIS_CFLAGS-y += $(LIBREDIS_FLAGS_SUPPRESS)
 
 ################################################################################
