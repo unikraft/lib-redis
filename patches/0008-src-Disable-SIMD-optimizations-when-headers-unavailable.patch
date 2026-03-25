@@ -1,0 +1,78 @@
+From 1d9515137f6584b36ac7ad79ec411775a43d1333 Mon Sep 17 00:00:00 2001
+From: Masoud Rahimy <masoodrahimy1379@gmail.com>
+Date: Wed, 25 Mar 2026 02:10:26 +0100
+Subject: [PATCH] src: Disable SIMD optimizations when headers unavailable
+
+Signed-off-by: Masoud Rahimy <masoodrahimy1379@gmail.com>
+---
+ src/config.h     | 10 ++++++++++
+ src/crccombine.c |  2 +-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/src/config.h b/src/config.h
+index 442e1d4..2610193 100644
+--- a/src/config.h
++++ b/src/config.h
+@@ -341,6 +341,7 @@ void setcpuaffinity(const char *cpulist);
+ #define HAVE_FADVISE
+ #endif
+ 
++#ifndef REDIS_NO_SIMD
+ #if defined(__x86_64__) && ((defined(__GNUC__) && __GNUC__ > 5) || (defined(__clang__)))
+     #if defined(__has_attribute) && __has_attribute(target)
+         #define HAVE_POPCNT
+@@ -351,8 +352,12 @@ void setcpuaffinity(const char *cpulist);
+ #else
+     #define ATTRIBUTE_TARGET_POPCNT
+ #endif
++#else
++    #define ATTRIBUTE_TARGET_POPCNT
++#endif
+ 
+ /* Check if we can compile AVX2 code */
++#ifndef REDIS_NO_SIMD
+ #if defined (__x86_64__) && ((defined(__GNUC__) && __GNUC__ >= 5) || (defined(__clang__) && __clang_major__ >= 4))
+ #if defined(__has_attribute) && __has_attribute(target)
+ #define HAVE_AVX2
+@@ -360,20 +365,25 @@ void setcpuaffinity(const char *cpulist);
+ #define ATTRIBUTE_TARGET_AVX2_POPCOUNT __attribute__((target("avx2,popcnt")))
+ #endif
+ #endif
++#endif
+ 
+ /* Check if we can compile AVX512 code */
++#ifndef REDIS_NO_SIMD
+ #if defined (__x86_64__) && ((defined(__GNUC__) && __GNUC__ >= 5) || (defined(__clang__) && __clang_major__ >= 4))
+ #if defined(__has_attribute) && __has_attribute(target)
+ #define HAVE_AVX512
+ #define ATTRIBUTE_TARGET_AVX512_POPCOUNT __attribute__((target("avx512f,avx512vpopcntdq")))
+ #endif
+ #endif
++#endif
+ 
+ /* Check for AArch64 (ARM v8) specific optimizations */
++#ifndef REDIS_NO_SIMD
+ #if defined(__aarch64__) && ((defined(__GNUC__) && __GNUC__ >= 5) || defined(__clang__))
+ #if defined(__has_attribute) && __has_attribute(target)
+ #define HAVE_AARCH64_NEON
+ #endif
+ #endif
++#endif
+ 
+ #endif
+diff --git a/src/crccombine.c b/src/crccombine.c
+index 20add37..597fa62 100644
+--- a/src/crccombine.c
++++ b/src/crccombine.c
+@@ -1,7 +1,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <strings.h>
+-#if defined(__i386__) || defined(__X86_64__)
++#if !defined(REDIS_NO_SIMD) && (defined(__i386__) || defined(__X86_64__))
+ #include <immintrin.h>
+ #endif
+ #include "crccombine.h"
+-- 
+2.34.1
+
