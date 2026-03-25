@@ -12,14 +12,14 @@ diff --git a/src/replication.c b/src/replication.c
 index e86aa4b59..5c8bc8395 100644
 --- a/src/replication.c
 +++ b/src/replication.c
-@@ -34,7 +34,6 @@
- #include "bio.h"
- #include "functions.h"
- 
+@@ -35,7 +35,6 @@
+ #include "connection.h"
+ #include "cluster_asm.h"
+
 -#include <memory.h>
  #include <sys/time.h>
  #include <unistd.h>
  #include <fcntl.h>
--- 
+--
 2.34.1
 

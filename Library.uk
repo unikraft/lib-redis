@@ -3,4 +3,4 @@ description := "An open source, in-memory data structure store, used as a databa
 gitrepo     := "https://github.com/redis/redis.git"
 homepage    := "https://redis.io"
 license     := "BSD-3-Clause"
-version     := 5.0.6 sha256:36c38ab5052facbbaac25bc823637d50b6b71926d1df123472903a818304e9ef https://github.com/redis/redis/archive/5.0.6.tar.gz
+version     := 8.6.1 sha256:768ad5a09c4f89a37faf4653beb2f8e88b9e6d9ba7b43c2be492d81d9a9e0db1 https://github.com/redis/redis/archive/8.6.1.zip

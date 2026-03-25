@@ -1,0 +1,34 @@
+From 99546b3677fca96a8cfdbda1296839f665dca52e Mon Sep 17 00:00:00 2001
+From: Masoud Rahimy <masoodrahimy1379@gmail.com>
+Date: Wed, 25 Mar 2026 02:10:19 +0100
+Subject: [PATCH] deps/fast_float: Add C fallback for fast_float_strtod
+
+Signed-off-by: Masoud Rahimy <masoodrahimy1379@gmail.com>
+---
+ deps/fast_float/fast_float_strtod.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+ create mode 100644 deps/fast_float/fast_float_strtod.c
+
+diff --git a/deps/fast_float/fast_float_strtod.c b/deps/fast_float/fast_float_strtod.c
+new file mode 100644
+index 0000000..1374586
+--- /dev/null
++++ b/deps/fast_float/fast_float_strtod.c
+@@ -0,0 +1,14 @@
++/* fast_float_strtod.c -- C fallback for fast_float_strtod.
++ *
++ * The original fast_float library is written in C++. This file provides
++ * a C-compatible fallback implementation using the standard strtod function
++ * for Unikraft.
++ */
++
++#include <stdlib.h>
++#include <errno.h>
++#include "fast_float_strtod.h"
++
++double fast_float_strtod(const char *nptr, char **endptr) {
++    return strtod(nptr, endptr);
++}
+-- 
+2.34.1
+
