@@ -3,8 +3,12 @@ From: Costin Lupu <costin.lupu@cs.pub.ro>
 Date: Sat, 16 Nov 2019 22:45:13 +0200
 Subject: [UNIKRAFT PATCH] Make bytesToHuman() definitions static
 
-This should be either upstreamed or we should refactor and use a single function
-and then upstream that second solution.
+Both server.c and redis-cli.c define bytesToHuman() without static,
+causing a duplicate symbol error when linked into the same Unikraft
+binary. Make both definitions static.
+
+Updated for Redis 8.0.x: signatures changed (added size_t size param;
+redis-cli.c return type changed from void to char *).
 
 Signed-off-by: Costin Lupu <costin.lupu@cs.pub.ro>
 ---
@@ -16,28 +20,27 @@ diff --git a/src/redis-cli.c b/src/redis-cli.c
 index 480921c..9f1a14e 100644
 --- a/src/redis-cli.c
 +++ b/src/redis-cli.c
-@@ -6684,7 +6684,7 @@ static long getLongInfoField(char *info, char *field) {
- 
+@@ -9613,7 +9613,7 @@ static long getLongInfoField(char *info, char *field) {
  /* Convert number of bytes into a human readable string of the form:
-  * 100B, 2G, 100M, 4K, and so forth. */
--void bytesToHuman(char *s, long long n) {
-+static void bytesToHuman(char *s, long long n) {
+  * 1003B, 4.03K, 100.00M, 2.32G, 3.01T
+  * Returns the parameter `s` containing the converted number. */
+-char *bytesToHuman(char *s, size_t size, long long n) {
++static char *bytesToHuman(char *s, size_t size, long long n) {
      double d;
- 
-     if (n < 0) {
+     char *r = s;
+
 diff --git a/src/server.c b/src/server.c
 index 7f0acaa..2524a12 100644
 --- a/src/server.c
 +++ b/src/server.c
-@@ -3058,7 +3058,7 @@ NULL
- 
+@@ -5527,7 +5527,7 @@ NULL
+
  /* Convert an amount of bytes into a human readable string in the form
   * of 100B, 2G, 100M, 4K, and so forth. */
--void bytesToHuman(char *s, unsigned long long n) {
-+static void bytesToHuman(char *s, unsigned long long n) {
+-void bytesToHuman(char *s, size_t size, unsigned long long n) {
++static void bytesToHuman(char *s, size_t size, unsigned long long n) {
      double d;
- 
-     if (n < 1024) {
--- 
-2.20.1
 
+     if (n < 1024) {
+--
+2.20.1
