@@ -1,0 +1,17 @@
+--- a/src/config.h
++++ b/src/config.h
+@@ -350,6 +350,7 @@
+ #define HAVE_FADVISE
+ #endif
+ 
++#ifndef REDIS_DISABLE_CPU_INTRINSICS
+ #if defined(__x86_64__) && ((defined(__GNUC__) && __GNUC__ > 5) || (defined(__clang__)))
+     #if defined(__has_attribute) && __has_attribute(target)
+         #define HAVE_POPCNT
+@@ -383,5 +384,6 @@
+ #define HAVE_AARCH64_NEON
+ #endif
+ #endif
++#endif
+ 
+ #endif

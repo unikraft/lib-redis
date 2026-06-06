@@ -47,7 +47,7 @@ $(eval $(call addlib_s,libredis_common,$(CONFIG_LIBREDIS)))
 ################################################################################
 # Sources
 ################################################################################
-LIBREDIS_VERSION=7.0.11
+LIBREDIS_VERSION=8.8.0
 LIBREDIS_URL=https://github.com/redis/redis/archive/$(LIBREDIS_VERSION).zip
 LIBREDIS_BASENAME=redis-$(LIBREDIS_VERSION)
 LIBREDIS_PATCHDIR=$(LIBREDIS_BASE)/patches
@@ -69,6 +69,11 @@ CXXINCLUDES-y += -I$(LIBREDIS_BASE)/include
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HIREDIS) += -I$(LIBREDIS_DEPS)/hiredis
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HISTOGRAM) += -I$(LIBREDIS_DEPS)/hdr_histogram
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_SRC)
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/fpconv
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/tre/lib
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/tre/local_includes
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/xxhash
 
 ################################################################################
 # Flags
@@ -78,6 +83,11 @@ LIBREDIS_FLAGS_SUPPRESS = -Wno-unused-parameter -Wno-unused-variable \
 	-Wno-unused-value -Wno-implicit-fallthrough -Wno-char-subscripts \
 	-Wno-misleading-indentation -D__STDC_NO_ATOMICS__
 LIBREDIS_CFLAGS-y += $(LIBREDIS_FLAGS_SUPPRESS)
+LIBREDIS_CFLAGS-y += -std=gnu11
+LIBREDIS_CFLAGS-y += -DTRE_REGEX_T_FIELD=value -DUSE_LOCAL_TRE_H
+LIBREDIS_CFLAGS-y += -DXXH_VECTOR=0 -U__SSE2__ -U__SSE__ -U__X86_64__ -U__i386__
+LIBREDIS_CFLAGS-y += -DREDIS_DISABLE_CPU_INTRINSICS
+LIBREDIS_CFLAGS-y += -DATTRIBUTE_TARGET_POPCNT=
 
 ################################################################################
 # Redis internal Lua
@@ -135,6 +145,7 @@ LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/hiredis.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/net.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/read.c
 LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/sds.c
+LIBREDIS_HIREDIS_SRCS-y += $(LIBREDIS_DEPS)/hiredis/sockcompat.c
 
 ################################################################################
 # Redis internal hdr histogram
@@ -144,99 +155,153 @@ LIBREDIS_HISTOGRAM_CFLAGS-y += $(LIBREDIS_CFLAGS-y)
 LIBREDIS_HISTOGRAM_SRCS-y += $(LIBREDIS_DEPS)/hdr_histogram/hdr_histogram.c
 
 ################################################################################
+# Redis internal fpconv
+################################################################################
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/fpconv/fpconv_dtoa.c
+
+################################################################################
+# Redis internal TRE
+################################################################################
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/regcomp.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/regerror.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/regexec.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-ast.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-compile.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-filter.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-match-backtrack.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-match-parallel.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-mem.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-parse.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/tre-stack.c
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/tre/lib/xmalloc.c
+
+################################################################################
+# Redis internal xxHash
+################################################################################
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/xxhash/xxhash.c
+LIBREDIS_SRCS-y += $(LIBREDIS_BASE)/compat/popcountdi2.c
+
+################################################################################
 # Functionality shared between server and client
 ################################################################################
 LIBREDIS_CFLAGS-y    += -Wno-missing-field-initializers
 LIBREDIS_CFLAGS-y    += -DREDIS_STATIC=''
 
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/acl.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/adlist.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/quicklist.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/ae.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/anet.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/aof.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/bio.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/bitops.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/blocked.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/call_reply.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/childinfo.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/commands.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/config.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/connection.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crc16.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crc64.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crcspeed.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/db.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/debug.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/defrag.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/threads_mngr.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/memory_prefetch.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/dict.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/endianconv.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/eval.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/evict.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/expire.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/function_lua.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/functions.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geo.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geohash.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geohash_helper.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/hyperloglog.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/intset.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/latency.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lazyfree.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/listpack.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/localtime.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut5.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut6.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/ebuckets.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/eventnotifier.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/iothread.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/mstr.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/entry.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/kvstore.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/fwtree.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/estore.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sds.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/zmalloc.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lzf_c.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lzf_d.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/pqsort.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sha1.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/zipmap.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/ziplist.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/release.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/networking.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/util.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/object.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/db.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/replication.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rdb.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_string.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_list.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_set.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_zset.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_hash.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_array.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sparsearray.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/config.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/aof.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/pubsub.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/multi.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/debug.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sort.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/intset.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/syncio.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster_asm.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster_legacy.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster_slot_stats.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crc16.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/endianconv.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/slowlog.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/eval.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/bio.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rio.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rand.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/memtest.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/syscheck.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crcspeed.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crccombine.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crc64.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/bitops.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sentinel.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/notify.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/setproctitle.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/blocked.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/hyperloglog.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/latency.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sparkline.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/redis-check-rdb.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/redis-check-aof.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geo.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lazyfree.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/module.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/evict.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/expire.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geohash.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/geohash_helper.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/childinfo.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/defrag.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/siphash.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rax.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_stream.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/listpack.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/localtime.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut5.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut6.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut8.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/acl.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/tracking.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/socket.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/tls.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sha256.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/timeout.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/setcpuaffinity.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/monotonic.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/mt19937-64.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/multi.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/networking.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/notify.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/object.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/pqsort.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/pubsub.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/quicklist.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rand.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rax.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rdb.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/redis-check-aof.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/redis-check-rdb.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/release.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/replication.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/resp_parser.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/rio.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/script.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/call_reply.c
 LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/script_lua.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sds.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sentinel.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/setcpuaffinity.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/setproctitle.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sha1.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sha256.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/siphash.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/slowlog.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sort.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/sparkline.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/syncio.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/syscheck.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_hash.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/timeout.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_list.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/tls.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/tracking.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_set.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_stream.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_string.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/t_zset.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/util.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/ziplist.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/zipmap.c
-LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/zmalloc.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/script.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/functions.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/function_lua.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/commands.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/strl.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/connection.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/unix.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/logreqres.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/keymeta.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/chk.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/hotkeys.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/gcra.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/vector.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/fast_float_strtod.c
 
 LIBREDIS_SRCS-$(CONFIG_LIBREDIS_MAIN_FUNCTION) += $(LIBREDIS_BASE)/main.c|unikraft
 
@@ -254,5 +319,7 @@ LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_CLIENT) += -I$(LIBREDIS_DEPS)/linenoise
 LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_SRC)/cli_common.c
 LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_DEPS)/linenoise/linenoise.c
 LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_SRC)/redis-cli.c
+LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_SRC)/redisassert.c
+LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_SRC)/cli_commands.c
 
 LIBREDIS_REDIS-CLI_FLAGS-y += -Dmain=redis_client_main
