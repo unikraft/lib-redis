@@ -47,12 +47,17 @@ $(eval $(call addlib_s,libredis_common,$(CONFIG_LIBREDIS)))
 ################################################################################
 # Sources
 ################################################################################
-LIBREDIS_VERSION=7.0.11
+LIBREDIS_VERSION=8.0.2
 LIBREDIS_URL=https://github.com/redis/redis/archive/$(LIBREDIS_VERSION).zip
 LIBREDIS_BASENAME=redis-$(LIBREDIS_VERSION)
 LIBREDIS_PATCHDIR=$(LIBREDIS_BASE)/patches
 $(eval $(call fetch,libredis,$(LIBREDIS_URL)))
 $(eval $(call patch,libredis,$(LIBREDIS_PATCHDIR),$(LIBREDIS_BASENAME)))
+
+$(LIBREDIS_SRC)/release.h: $(BUILD_DIR)/libredis/.patched
+	cd $(LIBREDIS_SRC) && sh mkreleasehdr.sh
+
+UK_PREPARE-y += $(LIBREDIS_SRC)/release.h
 
 ################################################################################
 # Helpers
@@ -69,6 +74,9 @@ CXXINCLUDES-y += -I$(LIBREDIS_BASE)/include
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HIREDIS) += -I$(LIBREDIS_DEPS)/hiredis
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_HISTOGRAM) += -I$(LIBREDIS_DEPS)/hdr_histogram
 LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/fpconv
+LIBREDIS_CINCLUDES-y += -I$(LIBREDIS_DEPS)/fast_float
+LIBREDIS_CINCLUDES-y += -I$(shell $(CC) -print-file-name=include)
 
 ################################################################################
 # Flags
@@ -76,7 +84,7 @@ LIBREDIS_CINCLUDES-$(CONFIG_LIBREDIS_LUA) += -I$(LIBREDIS_DEPS)/lua/src
 # Suppress some warnings to make the build process look neater
 LIBREDIS_FLAGS_SUPPRESS = -Wno-unused-parameter -Wno-unused-variable \
 	-Wno-unused-value -Wno-implicit-fallthrough -Wno-char-subscripts \
-	-Wno-misleading-indentation -D__STDC_NO_ATOMICS__
+	-Wno-misleading-indentation -D__STDC_NO_ATOMICS__ -UHAVE_AVX2
 LIBREDIS_CFLAGS-y += $(LIBREDIS_FLAGS_SUPPRESS)
 
 ################################################################################
@@ -256,3 +264,27 @@ LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_DEPS)/linenoise/linenoise.
 LIBREDIS_SRCS-$(CONFIG_LIBREDIS_CLIENT) += $(LIBREDIS_SRC)/redis-cli.c
 
 LIBREDIS_REDIS-CLI_FLAGS-y += -Dmain=redis_client_main
+
+################################################################################
+# Redis 8 new source files
+################################################################################
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/cluster_legacy.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/crccombine.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/ebuckets.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/eventnotifier.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/iothread.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/kvstore.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/logreqres.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/lolwut8.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/mstr.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/socket.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/strl.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/threads_mngr.c
+LIBREDIS_SRCS-y += $(LIBREDIS_SRC)/unix.c
+
+################################################################################
+# Redis 8 double-conversion deps (fpconv + fast_float C++)
+################################################################################
+LIBREDIS_SRCS-y += $(LIBREDIS_DEPS)/fpconv/fpconv_dtoa.c
+LIBREDIS_SRCS-y += $(LIBREDIS_BASE)/fast_float_strtod.c
+
